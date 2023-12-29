@@ -18,8 +18,8 @@ const (
 )
 
 type AuthHandler struct {
-	DB     *gorm.DB
-	Config *config.Config
+	UserRepository user.Repository
+	Config         *config.Config
 }
 
 type (
@@ -43,10 +43,7 @@ func (a *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := user.User{}
-	err := a.DB.Table("user").Select("id, name, password").
-		Where("name = ?", payload.Username).Limit(1).First(&u).Error
-
+	u, err := a.UserRepository.FindUser(payload.Username)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		rest.ServeJSON(http.StatusUnauthorized, w, &ErrorResponse{Error: ErrInvalidCredentials})
 		return
