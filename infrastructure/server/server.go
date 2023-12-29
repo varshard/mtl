@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/varshard/mtl/domain/user"
+	"github.com/varshard/mtl/domain/vote"
 	"github.com/varshard/mtl/handlers"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
@@ -14,7 +16,7 @@ type Server struct {
 }
 
 func (s Server) Start(conf *config.Config) {
-	db, err := database.InitDB(conf)
+	db, err := database.InitDB(&conf.DBConfig)
 	if err != nil {
 		panic(fmt.Sprintf("fail to connect to the database: %s", err.Error()))
 	}
@@ -25,12 +27,15 @@ func (s Server) Start(conf *config.Config) {
 }
 
 func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
-	authCtrl := &handlers.AuthHandler{DB: db, Config: conf}
+	userRepo := user.Repository{DB: db}
+	_ = vote.Repository{DB: db}
+
+	authHandler := &handlers.AuthHandler{UserRepository: userRepo, Config: conf}
 
 	r := chi.NewRouter()
 	r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte("Hello"))
 	})
-	r.Post("/login", authCtrl.Login)
+	r.Post("/login", authHandler.Login)
 	return r
 }
