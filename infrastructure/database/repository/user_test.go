@@ -1,24 +1,34 @@
-//go:build unit
+//go:build integration
 
-package user_test
+package repository
 
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/varshard/mtl/domain/user"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
 	xErr "github.com/varshard/mtl/infrastructure/errors"
+	"gorm.io/gorm"
 	"testing"
 )
 
-func TestUserRepository(t *testing.T) {
-	conf := config.ReadEnv()
-	db, err := database.InitDB(&conf.DBConfig)
+var db *gorm.DB
 
-	assert.NoError(t, err)
-	repo := user.Repository{DB: db}
+func TestMain(m *testing.M) {
+	var err error
+
+	conf := config.ReadEnv()
+	db, err = database.InitDB(&conf.DBConfig)
+	if err != nil {
+		panic("fail to connect to the test database")
+	}
+
+	m.Run()
+}
+
+func TestUserRepository(t *testing.T) {
+	repo := UserRepository{DB: db}
 
 	t.Run("FindUser", func(t *testing.T) {
 		t.Run("should return a user matching the user name", func(t *testing.T) {

@@ -1,28 +1,19 @@
-package user
+package repository
 
 import (
 	"errors"
+	"github.com/varshard/mtl/infrastructure/database"
 	xErr "github.com/varshard/mtl/infrastructure/errors"
 	"gorm.io/gorm"
 )
 
-type User struct {
-	ID       uint `gorm:"primaryKey"`
-	Name     string
-	Password string
-}
-
-func (User) TableName() string {
-	return "user"
-}
-
-type Repository struct {
+type UserRepository struct {
 	DB *gorm.DB
 }
 
-func (r Repository) FindUser(name string) (*User, error) {
-	u := &User{}
-	err := r.DB.Table("user").Select("id, name, password").
+func (r UserRepository) FindUser(name string) (*database.User, error) {
+	u := &database.User{}
+	err := r.DB.Table(database.TableUser).Select("id, name, password").
 		Where("name = ?", name).Limit(1).First(&u).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, xErr.NewErrNotFound(errors.New("user not found"))

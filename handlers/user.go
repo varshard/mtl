@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/golang-jwt/jwt"
-	"github.com/varshard/mtl/domain/user"
 	"github.com/varshard/mtl/infrastructure/config"
+	"github.com/varshard/mtl/infrastructure/database/repository"
 	"github.com/varshard/mtl/infrastructure/rest"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ const (
 )
 
 type AuthHandler struct {
-	UserRepository user.Repository
+	UserRepository repository.UserRepository
 	Config         *config.Config
 }
 

@@ -3,11 +3,10 @@ package server
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/varshard/mtl/domain/user"
-	"github.com/varshard/mtl/domain/vote"
 	"github.com/varshard/mtl/handlers"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
+	"github.com/varshard/mtl/infrastructure/database/repository"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -27,8 +26,8 @@ func (s Server) Start(conf *config.Config) {
 }
 
 func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
-	userRepo := user.Repository{DB: db}
-	_ = vote.Repository{DB: db}
+	userRepo := repository.UserRepository{DB: db}
+	_ = repository.UserRepository{DB: db}
 
 	authHandler := &handlers.AuthHandler{UserRepository: userRepo, Config: conf}
 
