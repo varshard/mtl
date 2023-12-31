@@ -65,7 +65,7 @@ func (r ItemRepository) Update(id uint, item vote.UpdateVoteItem) error {
 	return nil
 }
 
-func (r ItemRepository) Removeable(id uint) (bool, error) {
+func (r ItemRepository) Removable(id uint) (bool, error) {
 	item := &database.VoteItem{}
 	err := r.DB.Table("vote_item v").Select("id, name, description, vote_count").
 		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP_BY vote_item_id) u ON u.vote_item_id = v.id").

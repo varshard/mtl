@@ -148,6 +148,46 @@ func TestVoteItemRepository(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Remove", func(t *testing.T) {
+		defer tearDownVoteItem()
+
+		item := &database.VoteItem{
+			CreatedBy:   TestUserID,
+			Name:        "test create",
+			Description: "description",
+		}
+		require.NoError(t, db.Create(&item).Error)
+
+		var count int64 = 0
+		require.NoError(t, db.Table(database.TableVoteItem).Where("id = ?", item.ID).Count(&count).Error)
+		require.NotZero(t, count)
+
+		tests := []struct {
+			name string
+			id   uint
+			err  any
+		}{
+			{
+				name: "should remove an item successfully",
+				id:   item.ID,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := repo.Remove(tt.id)
+
+				if tt.err != nil {
+					assert.True(t, errors.As(err, &tt.err))
+				} else {
+					assert.NoError(t, db.Table(database.TableVoteItem).Where("id = ?", tt.id).Count(&count).Error)
+
+					assert.Zero(t, count)
+				}
+			})
+		}
+	})
 }
 
 func tearDownVoteItem() {
