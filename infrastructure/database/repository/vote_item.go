@@ -29,8 +29,8 @@ func (r ItemRepository) Exist(id uint) (bool, error) {
 
 func (r ItemRepository) GetItems() ([]database.VoteItem, error) {
 	items := make([]database.VoteItem, 0)
-	err := r.DB.Table("vote_item v").Select("id, name, description, vote_count").
-		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP_BY vote_item_id) u ON u.vote_item_id = v.id").
+	err := r.DB.Table("vote_item v").Select("id, name, description, IFNULL(vote_count,0) AS vote_count").
+		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP BY vote_item_id) u ON u.vote_item_id = v.id").
 		Order("vote_count DESC").Find(&items).Error
 	if err != nil {
 		return items, xErr.NewErrUnexpected(err)

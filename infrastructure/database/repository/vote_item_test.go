@@ -188,6 +188,18 @@ func TestVoteItemRepository(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("GetItems", func(t *testing.T) {
+		items, err := repo.GetItems()
+		require.NoError(t, err)
+
+		require.NotZero(t, len(items))
+
+		prev := items[0]
+		for i := 1; i < len(items); i++ {
+			assert.GreaterOrEqual(t, prev.VoteCount, items[i].VoteCount)
+		}
+	})
 }
 
 func tearDownVoteItem() {
