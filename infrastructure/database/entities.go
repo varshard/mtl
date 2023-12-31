@@ -7,8 +7,8 @@ const (
 )
 
 type User struct {
-	ID       uint `gorm:"primaryKey"`
-	Name     string
+	ID       uint   `json:"id" gorm:"primaryKey"`
+	Name     string `json:"name"`
 	Password string
 }
 
@@ -17,11 +17,11 @@ func (User) TableName() string {
 }
 
 type VoteItem struct {
-	ID          uint `gorm:"primaryKey"`
-	Name        string
-	Description string
-	CreatedBy   uint
-	VoteCount   uint `gorm:"<-:false"`
+	ID          uint   `gorm:"primaryKey"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedBy   uint   `json:"created_by"`
+	VoteCount   uint   `gorm:"<-:false"`
 }
 
 func (VoteItem) TableName() string {
@@ -29,8 +29,8 @@ func (VoteItem) TableName() string {
 }
 
 type UserVote struct {
-	VoteItemID uint
-	UserID     uint
+	VoteItemID uint `json:"vote_item_id"`
+	UserID     uint `json:"user_id"`
 }
 
 func (UserVote) TableName() string {
