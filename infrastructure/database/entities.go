@@ -21,7 +21,7 @@ type VoteItem struct {
 	Name        string
 	Description string
 	CreatedBy   uint
-	VoteCount   uint
+	VoteCount   uint `gorm:"<-:false"`
 }
 
 func (VoteItem) TableName() string {

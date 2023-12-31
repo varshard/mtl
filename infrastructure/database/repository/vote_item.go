@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"github.com/varshard/mtl/domain/vote"
 	"github.com/varshard/mtl/infrastructure/database"
 	xErr "github.com/varshard/mtl/infrastructure/errors"
 	"gorm.io/gorm"
@@ -32,7 +33,7 @@ func (r ItemRepository) GetItems() ([]database.VoteItem, error) {
 		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP_BY vote_item_id) u ON u.vote_item_id = v.id").
 		Order("vote_count DESC").Find(&items).Error
 	if err != nil {
-		return items, err
+		return items, xErr.NewErrUnexpected(err)
 	}
 
 	return items, nil
@@ -47,44 +48,47 @@ func (r ItemRepository) Create(item database.VoteItem) (*database.VoteItem, erro
 	return &item, nil
 }
 
-func (r ItemRepository) Update(id uint, item database.VoteItem) error {
+func (r ItemRepository) Update(id uint, item vote.UpdateVoteItem) error {
 	exist := &database.VoteItem{ID: id}
 
 	err := r.DB.Table(exist.TableName()).Where(exist).Take(&exist).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return xErr.NewErrNotFound(errors.New(ErrVoteItemNotFound))
 	} else if err != nil {
-		return err
+		return xErr.NewErrUnexpected(err)
 	}
 
-	if err := r.DB.Table(item.TableName()).Where(exist).Updates(item).Error; err != nil {
+	if err := r.DB.Table(database.TableVoteItem).Where(exist).Updates(item).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r ItemRepository) Remove(id uint) error {
+func (r ItemRepository) Removeable(id uint) (bool, error) {
 	item := &database.VoteItem{}
 	err := r.DB.Table("vote_item v").Select("id, name, description, vote_count").
 		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP_BY vote_item_id) u ON u.vote_item_id = v.id").
 		Where("v.id = ?", id).
 		First(item).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return xErr.NewErrNotFound(errors.New(ErrVoteItemNotFound))
+		return false, xErr.NewErrNotFound(errors.New(ErrVoteItemNotFound))
 	} else if err != nil {
-		return err
+		return false, xErr.NewErrUnexpected(err)
 	}
-	if item.VoteCount > 0 {
-		return xErr.NewErrInvalidInput(errors.New(ErrRemoveVotedItem))
-	}
+	return item.VoteCount > 0, nil
+}
 
+func (r ItemRepository) Remove(id uint) error {
+	if err := r.DB.Table(database.TableVoteItem).Where("id = ?", id).Delete(&database.VoteItem{}).Error; err != nil {
+		return xErr.NewErrUnexpected(err)
+	}
 	return nil
 }
 
 func (r ItemRepository) ResetItems() error {
-	if err := r.DB.Raw("TRUNCATE user_vote").Error; err != nil {
+	if err := r.DB.Exec("TRUNCATE user_vote").Error; err != nil {
 		return err
 	}
-	return r.DB.Raw("TRUNCATE vote_item").Error
+	return r.DB.Exec("TRUNCATE vote_item").Error
 }
