@@ -189,16 +189,52 @@ func TestVoteItemRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("GetItems", func(t *testing.T) {
-		items, err := repo.GetItems()
-		require.NoError(t, err)
+	t.Run("Removable", func(t *testing.T) {
+		defer tearDownVoteItem()
 
-		require.NotZero(t, len(items))
-
-		prev := items[0]
-		for i := 1; i < len(items); i++ {
-			assert.GreaterOrEqual(t, prev.VoteCount, items[i].VoteCount)
+		tests := []struct {
+			name     string
+			id       uint
+			expected bool
+			err      any
+		}{
+			{
+				name:     "should returns 0 if the item has been voted",
+				id:       3,
+				expected: false,
+			},
+			{
+				name:     "should returns 0 if the item has 0 vote",
+				id:       1,
+				expected: true,
+			},
 		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				actual, err := repo.Removable(tt.id)
+
+				if tt.err != nil {
+					assert.True(t, errors.As(err, &tt.err))
+				} else {
+					assert.Equal(t, tt.expected, actual)
+				}
+			})
+		}
+	})
+
+	t.Run("GetItems", func(t *testing.T) {
+		t.Run("should returns items sorted by vote count", func(t *testing.T) {
+			items, err := repo.GetItems()
+			require.NoError(t, err)
+
+			require.NotZero(t, len(items))
+
+			prev := items[0]
+			for i := 1; i < len(items); i++ {
+				assert.GreaterOrEqual(t, prev.VoteCount, items[i].VoteCount)
+			}
+		})
 	})
 }
 

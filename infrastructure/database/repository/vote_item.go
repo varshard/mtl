@@ -67,8 +67,8 @@ func (r ItemRepository) Update(id uint, item vote.UpdateVoteItem) error {
 
 func (r ItemRepository) Removable(id uint) (bool, error) {
 	item := &database.VoteItem{}
-	err := r.DB.Table("vote_item v").Select("id, name, description, vote_count").
-		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP_BY vote_item_id) u ON u.vote_item_id = v.id").
+	err := r.DB.Table("vote_item v").Select("id, name, description, IFNULL(vote_count,0) AS vote_count").
+		Joins("LEFT JOIN (SELECT vote_item_id, COUNT(*) AS vote_count FROM user_vote GROUP BY vote_item_id) u ON u.vote_item_id = v.id").
 		Where("v.id = ?", id).
 		First(item).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,7 +76,7 @@ func (r ItemRepository) Removable(id uint) (bool, error) {
 	} else if err != nil {
 		return false, xErr.NewErrUnexpected(err)
 	}
-	return item.VoteCount > 0, nil
+	return item.VoteCount == 0, nil
 }
 
 func (r ItemRepository) Remove(id uint) error {
