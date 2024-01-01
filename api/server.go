@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/varshard/mtl/api/handlers"
 	"github.com/varshard/mtl/api/middlewares"
 	"github.com/varshard/mtl/api/routes"
@@ -35,10 +36,19 @@ func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	authMiddleware := middlewares.NewAuthenticationMiddleware(conf.Secret, userRepo)
 
 	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
 	r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte("Hello"))
 	})
 	r.Post("/login", authHandler.Login)
-	r.Mount("/vote_items", routes.MakeVoteItemsRoutes(voteItemRepository, authMiddleware))
+	r.Mount("/vote_items", routes.MakeVoteItemsRoutes(userRepo, voteItemRepository, authMiddleware))
 	return r
 }

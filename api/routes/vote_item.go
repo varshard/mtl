@@ -7,14 +7,17 @@ import (
 	"net/http"
 )
 
-func MakeVoteItemsRoutes(voteItemRepository repository.ItemRepository, middlewares ...func(http.Handler) http.Handler) *chi.Mux {
+func MakeVoteItemsRoutes(userRepository repository.UserRepository, voteItemRepository repository.ItemRepository, middlewares ...func(http.Handler) http.Handler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middlewares...)
 
-	handler := handlers.VoteItemHandler{VoteItemRepository: voteItemRepository}
+	handler := handlers.VoteItemHandler{UserRepository: userRepository, VoteItemRepository: voteItemRepository}
 
 	r.Get("/", handler.GetVoteItems)
+	r.Post("/", handler.CreateItem)
+	r.Patch("/{id}", handler.Update)
+	r.Delete("/{id}", handler.Delete)
 
 	return r
 }

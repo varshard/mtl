@@ -48,4 +48,23 @@ func TestUserRepository(t *testing.T) {
 			assert.Nil(t, u)
 		})
 	})
+
+	t.Run("FindUserByID", func(t *testing.T) {
+		t.Run("should return a user matching the id", func(t *testing.T) {
+			u, err := repo.FindUserByID(1)
+
+			require.NoError(t, err)
+			require.NotNil(t, u)
+			assert.Equal(t, "test", u.Name)
+			assert.NotZero(t, u.ID)
+		})
+
+		t.Run("should return nil if user doesn't exist", func(t *testing.T) {
+			u, err := repo.FindUserByID(0)
+
+			assert.EqualError(t, err, "user not found")
+			assert.True(t, errors.As(err, &xErr.ErrNotFound{}))
+			assert.Nil(t, u)
+		})
+	})
 }
