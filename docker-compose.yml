@@ -11,3 +11,12 @@ services:
       MYSQL_PASSWORD: "password"
       MYSQL_ROOT_PASSWORD: "password"
 
+  mtl:
+    build: .
+    image: mtl
+    ports:
+      - "3000:3000"
+    environment:
+      DB_CONN: mtl:password@tcp(db:3306)/mtl
+      SECRET: 9bce41ed9b1086d355d310a9be7ed100ef9c0751bd9ba8d36533e3a3fe248006
+      PORT: ":3000"
