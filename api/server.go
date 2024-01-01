@@ -1,9 +1,11 @@
-package main
+package api
 
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/varshard/mtl/handlers"
+	"github.com/varshard/mtl/api/handlers"
+	"github.com/varshard/mtl/api/middlewares"
+	"github.com/varshard/mtl/api/routes"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
 	"github.com/varshard/mtl/infrastructure/database/repository"
@@ -27,14 +29,16 @@ func (s Server) Start(conf *config.Config) {
 
 func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	userRepo := repository.UserRepository{DB: db}
-	_ = repository.UserRepository{DB: db}
+	voteItemRepository := repository.ItemRepository{DB: db}
 
 	authHandler := &handlers.AuthHandler{UserRepository: userRepo, Config: conf}
+	authMiddleware := middlewares.NewAuthenticationMiddleware(conf.Secret, userRepo)
 
 	r := chi.NewRouter()
 	r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte("Hello"))
 	})
 	r.Post("/login", authHandler.Login)
+	r.Mount("/vote_items", routes.MakeVoteItemsRoutes(voteItemRepository, authMiddleware))
 	return r
 }
