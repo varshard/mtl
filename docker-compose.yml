@@ -10,6 +10,9 @@ services:
       MYSQL_USER: "mtl"
       MYSQL_PASSWORD: "password"
       MYSQL_ROOT_PASSWORD: "password"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./dbdata:/var/lib/mysql
 
   mtl:
     build: .
