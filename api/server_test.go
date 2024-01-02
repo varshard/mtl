@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/varshard/mtl/api/handlers"
+	"github.com/varshard/mtl/api/handlers/responses"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
 	"github.com/varshard/mtl/infrastructure/database/repository"
@@ -223,6 +224,67 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestGetVoteItems(t *testing.T) {
+	url := server.URL + "/vote_items"
+
+	tests.SeedDB(db)
+	defer tests.Truncate(db)
+
+	assert.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{UserID: 3, VoteItemID: 3}).Error)
+	assert.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{UserID: 2, VoteItemID: 3}).Error)
+	assert.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{UserID: 1, VoteItemID: 1}).Error)
+
+	test := []struct {
+		name           string
+		token          string
+		assertFunc     func(t *testing.T, data []database.VoteItem)
+		expectedStatus int
+	}{
+		{
+			name:           "it should returns 401 if the bearer token is invalid",
+			token:          "Bearer invalid",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "it should returns items sorted by vote_count",
+			token:          bearerToken,
+			expectedStatus: http.StatusOK,
+			assertFunc: func(t *testing.T, data []database.VoteItem) {
+				assert.NotZero(t, data)
+				prev := data[0]
+				assert.NotZero(t, prev.VoteCount)
+				for i := 1; i < len(data); i++ {
+					item := data[i]
+					assert.True(t, prev.VoteCount >= item.VoteCount)
+
+					prev = data[i]
+				}
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+			assert.NoError(t, err)
+			req.Header.Set(Authorization, tt.token)
+
+			resp, err := http.DefaultClient.Do(req)
+			assert.NoError(t, err)
+
+			defer resp.Body.Close()
+
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			if tt.assertFunc != nil {
+				respBody := responses.DataResponse[[]database.VoteItem]{}
+				assert.NoError(t, json.NewDecoder(resp.Body).Decode(&respBody))
+				tt.assertFunc(t, respBody.Data)
+			}
+		})
+	}
+}
+
 func TestDelete(t *testing.T) {
 	url := server.URL + "/vote_items"
 	tests.SeedDB(db)
@@ -339,6 +401,56 @@ func TestVote(t *testing.T) {
 	for _, tt := range test {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%d/vote", url, tt.id), bytes.NewBuffer(nil))
+			assert.NoError(t, err)
+			req.Header.Set(Authorization, tt.token)
+
+			resp, err := http.DefaultClient.Do(req)
+			assert.NoError(t, err)
+
+			defer resp.Body.Close()
+
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			if tt.assertFunc != nil {
+				tt.assertFunc(t)
+			}
+		})
+	}
+}
+
+func TestResetItems(t *testing.T) {
+	url := server.URL + "/vote_items/reset"
+	tests.SeedDB(db)
+	defer tests.Truncate(db)
+
+	assert.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{UserID: 3, VoteItemID: 3}).Error)
+
+	test := []struct {
+		name           string
+		token          string
+		assertFunc     func(t *testing.T)
+		expectedStatus int
+	}{
+		{
+			name:           "it should returns 401 if the bearer token is invalid",
+			token:          "Bearer invalid",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "it should truncate vote items successfully",
+			token:          bearerToken,
+			expectedStatus: http.StatusOK,
+			assertFunc: func(t *testing.T) {
+				var count int64
+				assert.NoError(t, db.Table(database.TableVoteItem).Count(&count).Error)
+				assert.Zero(t, count)
+			},
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(nil))
 			assert.NoError(t, err)
 			req.Header.Set(Authorization, tt.token)
 
