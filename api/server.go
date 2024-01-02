@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/varshard/mtl/api/handlers"
 	"github.com/varshard/mtl/api/middlewares"
-	"github.com/varshard/mtl/api/routes"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
 	"github.com/varshard/mtl/infrastructure/database/repository"
@@ -14,10 +13,10 @@ import (
 	"net/http"
 )
 
-type Server struct {
+type MTLServer struct {
 }
 
-func (s Server) Start(conf *config.Config) {
+func (s MTLServer) Start(conf *config.Config) {
 	db, err := database.InitDB(&conf.DBConfig)
 	if err != nil {
 		panic(fmt.Sprintf("fail to connect to the database: %s", err.Error()))
@@ -28,12 +27,16 @@ func (s Server) Start(conf *config.Config) {
 	}
 }
 
-func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
+func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	userRepo := repository.UserRepository{DB: db}
 	voteItemRepository := repository.ItemRepository{DB: db}
+	voteRepository := repository.VoteRepository{DB: db}
 
 	authHandler := &handlers.AuthHandler{UserRepository: userRepo, Config: conf}
 	authMiddleware := middlewares.NewAuthenticationMiddleware(conf.Secret, userRepo)
+
+	voteItemHandler := handlers.VoteItemHandler{UserRepository: userRepo, VoteItemRepository: voteItemRepository}
+	voteHandler := handlers.VoteHandler{VoteRepository: voteRepository, UserRepository: userRepo}
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -49,6 +52,17 @@ func (s Server) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 		writer.Write([]byte("Hello"))
 	})
 	r.Post("/login", authHandler.Login)
-	r.Mount("/vote_items", routes.MakeVoteItemsRoutes(userRepo, voteItemRepository, authMiddleware))
+
+	voteRouter := chi.NewRouter()
+	voteRouter.Use(authMiddleware)
+	voteRouter.Get("/", voteItemHandler.GetVoteItems)
+	voteRouter.Post("/", voteItemHandler.CreateItem)
+	voteRouter.Post("/reset", voteItemHandler.ResetItems)
+	voteRouter.Patch("/{id}", voteItemHandler.Update)
+	voteRouter.Delete("/{id}", voteItemHandler.Delete)
+	voteRouter.Post("/{id}/vote", voteHandler.Vote)
+	voteRouter.Post("/{id}/reset", voteHandler.ClearVotes)
+
+	r.Mount("/vote_items", voteRouter)
 	return r
 }
