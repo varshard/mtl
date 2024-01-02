@@ -95,7 +95,7 @@ func (v VoteItemHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+	rest.ServeJSON(http.StatusOK, w, responses.NewSuccessResponse(true))
 }
 
 func (v VoteItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +126,7 @@ func (v VoteItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+	rest.ServeJSON(http.StatusOK, w, responses.NewSuccessResponse(true))
 }
 
 func (v VoteItemHandler) ResetItems(w http.ResponseWriter, r *http.Request) {
@@ -134,5 +134,5 @@ func (v VoteItemHandler) ResetItems(w http.ResponseWriter, r *http.Request) {
 		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: "fail to remove an item"})
 		return
 	}
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+	rest.ServeJSON(http.StatusOK, w, responses.NewSuccessResponse(true))
 }

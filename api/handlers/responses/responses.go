@@ -19,3 +19,11 @@ func NewDataResponse[T any](data T) DataResponse[T] {
 		Data: data,
 	}
 }
+
+type Success struct {
+	Success bool `json:"success"`
+}
+
+func NewSuccessResponse(success bool) DataResponse[Success] {
+	return NewDataResponse(Success{Success: success})
+}

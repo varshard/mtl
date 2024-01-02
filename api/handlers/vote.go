@@ -50,7 +50,7 @@ func (v VoteHandler) Vote(w http.ResponseWriter, r *http.Request) {
 		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})
 		return
 	}
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+	rest.ServeJSON(http.StatusOK, w, responses.NewSuccessResponse(true))
 }
 
 func (v VoteHandler) ClearVotes(w http.ResponseWriter, r *http.Request) {
@@ -66,5 +66,5 @@ func (v VoteHandler) ClearVotes(w http.ResponseWriter, r *http.Request) {
 		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})
 		return
 	}
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+	rest.ServeJSON(http.StatusOK, w, responses.NewSuccessResponse(true))
 }

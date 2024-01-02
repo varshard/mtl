@@ -7,6 +7,6 @@ import (
 
 func main() {
 	conf := config.ReadEnv()
-	s := api.Server{}
+	s := api.MTLServer{}
 	s.Start(&conf)
 }
