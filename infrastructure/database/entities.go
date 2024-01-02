@@ -17,10 +17,9 @@ func (User) TableName() string {
 }
 
 type VoteItem struct {
-	ID          uint   `gorm:"primaryKey"`
+	ID          uint   `json:"-" gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	CreatedBy   uint   `json:"created_by"`
 	VoteCount   uint   `json:"vote_count" gorm:"<-:false"`
 }
 

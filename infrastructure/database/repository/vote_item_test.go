@@ -1,4 +1,4 @@
-//go:build integration
+//go:build unit
 
 package repository
 
@@ -60,19 +60,9 @@ func TestVoteItemRepository(t *testing.T) {
 			{
 				name: "should create an item successfully",
 				input: database.VoteItem{
-					CreatedBy:   TestUserID,
 					Name:        "test item",
 					Description: "description",
 				},
-			},
-			{
-				name: "should returns an error if the creator ID is invalid",
-				input: database.VoteItem{
-					CreatedBy:   99,
-					Name:        "test item 2",
-					Description: "should returns an error",
-				},
-				err: xErr.NewErrUnexpected(errors.New("dummy")),
 			},
 		}
 
@@ -88,7 +78,6 @@ func TestVoteItemRepository(t *testing.T) {
 					input := tt.input
 					assert.Equal(t, input.Name, item.Name)
 					assert.Equal(t, input.Description, item.Description)
-					assert.Equal(t, input.CreatedBy, item.CreatedBy)
 				}
 			})
 		}
@@ -98,7 +87,6 @@ func TestVoteItemRepository(t *testing.T) {
 		defer tearDownVoteItem()
 
 		item := &database.VoteItem{
-			CreatedBy:   TestUserID,
 			Name:        "test create",
 			Description: "description",
 		}
@@ -143,7 +131,6 @@ func TestVoteItemRepository(t *testing.T) {
 					input := tt.input
 					assert.Equal(t, input.Name, actual.Name)
 					assert.Equal(t, input.Description, actual.Description)
-					assert.Equal(t, item.CreatedBy, actual.CreatedBy)
 				}
 			})
 		}
@@ -153,7 +140,6 @@ func TestVoteItemRepository(t *testing.T) {
 		defer tearDownVoteItem()
 
 		item := &database.VoteItem{
-			CreatedBy:   TestUserID,
 			Name:        "test create",
 			Description: "description",
 		}
@@ -193,7 +179,6 @@ func TestVoteItemRepository(t *testing.T) {
 		defer tearDownVoteItem()
 
 		item := &database.VoteItem{
-			CreatedBy:   TestUserID,
 			Name:        "test create",
 			Description: "description",
 		}
