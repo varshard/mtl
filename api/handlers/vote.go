@@ -46,7 +46,7 @@ func (v VoteHandler) Vote(w http.ResponseWriter, r *http.Request) {
 		rest.ServeJSON(http.StatusNotFound, w, &responses.ErrorResponse{Error: "vote item not found"})
 		return
 	}
-	ok, err := v.VoteRepository.IsVoteable(usr.ID)
+	ok, err := v.VoteRepository.IsVotable(usr.ID)
 	if err != nil {
 		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})
 		return

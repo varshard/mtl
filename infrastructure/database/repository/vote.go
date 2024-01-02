@@ -22,7 +22,7 @@ func (r VoteRepository) HasVote(itemID, userID uint) (bool, error) {
 	return count > 0, nil
 }
 
-func (r VoteRepository) IsVoteable(userID uint) (bool, error) {
+func (r VoteRepository) IsVotable(userID uint) (bool, error) {
 	var count int64 = 0
 	if err := r.DB.Table(database.TableUserVote).Where("user_id = ?", userID).Count(&count).Error; err != nil {
 		return false, err

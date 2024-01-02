@@ -48,7 +48,7 @@ func TestVoteRepository(t *testing.T) {
 		}
 	})
 
-	t.Run("IsVoteable", func(t *testing.T) {
+	t.Run("IsVotable", func(t *testing.T) {
 		db.Table(database.TableUserVote).Create(&database.UserVote{
 			UserID:     1,
 			VoteItemID: 2,
@@ -76,7 +76,7 @@ func TestVoteRepository(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				actual, err := repo.IsVoteable(tt.userID)
+				actual, err := repo.IsVotable(tt.userID)
 				if tt.expectedError {
 					assert.Error(t, err)
 				}
