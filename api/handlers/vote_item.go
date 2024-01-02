@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt"
 	"github.com/varshard/mtl/api/handlers/responses"
-	"github.com/varshard/mtl/api/middlewares"
 	"github.com/varshard/mtl/domain/vote"
 	"github.com/varshard/mtl/infrastructure/database"
 	"github.com/varshard/mtl/infrastructure/database/repository"
@@ -44,20 +42,9 @@ func (v VoteItemHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	claims, _ := ctx.Value(middlewares.AuthContext).(jwt.StandardClaims)
-
-	usr, err := v.UserRepository.FindUser(claims.Subject)
-
-	if err != nil {
-		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})
-		return
-	}
-
 	item, err := v.VoteItemRepository.Create(database.VoteItem{
 		Name:        payload.Name,
 		Description: payload.Description,
-		CreatedBy:   usr.ID,
 	})
 
 	if err != nil {
@@ -65,7 +52,7 @@ func (v VoteItemHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(item))
+	rest.ServeJSON(http.StatusCreated, w, responses.NewDataResponse(item))
 }
 
 func (v VoteItemHandler) Update(w http.ResponseWriter, r *http.Request) {
