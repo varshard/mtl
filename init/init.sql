@@ -30,10 +30,7 @@ CREATE TABLE `vote_item`
     `id`          int NOT NULL AUTO_INCREMENT,
     `name`        varchar(200) DEFAULT NULL,
     `description` text,
-    `created_by`  int          DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `created_by` (`created_by`),
-    CONSTRAINT `created_by` FOREIGN KEY (`created_by`) REFERENCES `user` (`id`)
+    PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 4
   DEFAULT CHARSET = utf8mb4
@@ -48,8 +45,8 @@ DROP TABLE IF EXISTS `user_vote`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_vote`
 (
-    `user_id`      int DEFAULT NULL,
-    `vote_item_id` int DEFAULT NULL,
+    `user_id`      int NOT NULL ,
+    `vote_item_id` int NOT NULL,
     KEY `use_fk` (`user_id`),
     KEY `vote_item_fk` (`vote_item_id`),
     CONSTRAINT `use_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -66,13 +63,7 @@ CREATE TABLE `user_vote`
 -- Dumping data for table `user`
 --
 
-LOCK TABLES `user` WRITE;
-/*!40000 ALTER TABLE `user`
-    DISABLE KEYS */;
 INSERT INTO `user`
 VALUES (1, 'test', '$2a$10$on2mGRDvXJqn6wk.1ukauusNtpWuAWsQ.1i3zYnFXaAr.AGo2zpte'),
        (2, 'John', '$2a$10$on2mGRDvXJqn6wk.1ukauusNtpWuAWsQ.1i3zYnFXaAr.AGo2zpte'),
        (3, 'test_user', '$2a$10$on2mGRDvXJqn6wk.1ukauusNtpWuAWsQ.1i3zYnFXaAr.AGo2zpte');
-/*!40000 ALTER TABLE `user`
-    ENABLE KEYS */;
-UNLOCK TABLES;
