@@ -10,6 +10,7 @@ import (
 	"github.com/varshard/mtl/api/handlers"
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
+	"github.com/varshard/mtl/infrastructure/database/repository"
 	"github.com/varshard/mtl/tests"
 	"gorm.io/gorm"
 	"net/http"
@@ -269,6 +270,75 @@ func TestDelete(t *testing.T) {
 	for _, tt := range test {
 		t.Run(tt.name, func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%d", url, tt.id), nil)
+			assert.NoError(t, err)
+			req.Header.Set(Authorization, tt.token)
+
+			resp, err := http.DefaultClient.Do(req)
+			assert.NoError(t, err)
+
+			defer resp.Body.Close()
+
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			if tt.assertFunc != nil {
+				tt.assertFunc(t)
+			}
+		})
+	}
+}
+func TestVote(t *testing.T) {
+	url := server.URL + "/vote_items"
+	tests.SeedDB(db)
+	defer tests.Truncate(db)
+
+	userVoteRepo := repository.VoteRepository{DB: db}
+	token2, err := login("test", "password")
+	assert.NoError(t, err)
+
+	bearerToken2 := "Bearer " + token2
+
+	assert.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{UserID: 3, VoteItemID: 3}).Error)
+
+	test := []struct {
+		name           string
+		token          string
+		id             uint
+		assertFunc     func(t *testing.T)
+		expectedStatus int
+	}{
+		{
+			name:           "it should returns 401 if the bearer token is invalid",
+			token:          "Bearer invalid",
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:  "it should vote for the specified item",
+			token: bearerToken2,
+			id:    1,
+			assertFunc: func(t *testing.T) {
+				voted, err := userVoteRepo.HasVote(1, 1)
+				assert.NoError(t, err)
+				assert.True(t, voted)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "it should returns bad request if user has already voted",
+			token:          bearerToken,
+			id:             3,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "it should returns 404 if the item doesn't exist",
+			id:             0,
+			token:          bearerToken2,
+			expectedStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%d/vote", url, tt.id), bytes.NewBuffer(nil))
 			assert.NoError(t, err)
 			req.Header.Set(Authorization, tt.token)
 

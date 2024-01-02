@@ -14,8 +14,9 @@ import (
 const ErrInvalidItemID = "id isn't a number"
 
 type VoteHandler struct {
-	VoteRepository repository.VoteRepository
-	UserRepository repository.UserRepository
+	VoteRepository     repository.VoteRepository
+	VoteItemRepository repository.ItemRepository
+	UserRepository     repository.UserRepository
 }
 
 func (v VoteHandler) Vote(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,15 @@ func (v VoteHandler) Vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	itemID := uint(id)
+	exist, err := v.VoteItemRepository.Exist(itemID)
+	if err != nil {
+		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})
+		return
+	}
+	if !exist {
+		rest.ServeJSON(http.StatusNotFound, w, &responses.ErrorResponse{Error: "vote item not found"})
+		return
+	}
 	ok, err := v.VoteRepository.IsVoteable(usr.ID)
 	if err != nil {
 		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: responses.ErrInternalServerError})

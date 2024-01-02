@@ -19,7 +19,7 @@ type ItemRepository struct {
 
 func (r ItemRepository) Exist(id uint) (bool, error) {
 	var count int64 = 0
-	err := r.DB.Table(database.TableVoteItem).Count(&count).Where("id = ?", id).Error
+	err := r.DB.Table(database.TableVoteItem).Where("id = ?", id).Count(&count).Error
 	if err != nil {
 		return false, err
 	}

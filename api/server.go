@@ -36,7 +36,7 @@ func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	authMiddleware := middlewares.NewAuthenticationMiddleware(conf.Secret, userRepo)
 
 	voteItemHandler := handlers.VoteItemHandler{UserRepository: userRepo, VoteItemRepository: voteItemRepository}
-	voteHandler := handlers.VoteHandler{VoteRepository: voteRepository, UserRepository: userRepo}
+	voteHandler := handlers.VoteHandler{VoteRepository: voteRepository, UserRepository: userRepo, VoteItemRepository: voteItemRepository}
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
