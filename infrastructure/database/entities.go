@@ -21,7 +21,7 @@ type VoteItem struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	CreatedBy   uint   `json:"created_by"`
-	VoteCount   uint   `gorm:"<-:false"`
+	VoteCount   uint   `json:"vote_count" gorm:"<-:false"`
 }
 
 func (VoteItem) TableName() string {
