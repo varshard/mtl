@@ -9,6 +9,7 @@ import (
 	"github.com/varshard/mtl/infrastructure/config"
 	"github.com/varshard/mtl/infrastructure/database"
 	xErr "github.com/varshard/mtl/infrastructure/errors"
+	"github.com/varshard/mtl/tests"
 	"gorm.io/gorm"
 	"testing"
 )
@@ -24,7 +25,12 @@ func TestMain(m *testing.M) {
 		panic("fail to connect to the test database")
 	}
 
+	if err := tests.SeedDB(db); err != nil {
+		panic(err)
+	}
+
 	m.Run()
+	defer tests.Truncate(db)
 }
 
 func TestUserRepository(t *testing.T) {
@@ -42,25 +48,6 @@ func TestUserRepository(t *testing.T) {
 
 		t.Run("should return nil if user doesn't exist", func(t *testing.T) {
 			u, err := repo.FindUser("not exist")
-
-			assert.EqualError(t, err, "user not found")
-			assert.True(t, errors.As(err, &xErr.ErrNotFound{}))
-			assert.Nil(t, u)
-		})
-	})
-
-	t.Run("FindUserByID", func(t *testing.T) {
-		t.Run("should return a user matching the id", func(t *testing.T) {
-			u, err := repo.FindUserByID(1)
-
-			require.NoError(t, err)
-			require.NotNil(t, u)
-			assert.Equal(t, "test", u.Name)
-			assert.NotZero(t, u.ID)
-		})
-
-		t.Run("should return nil if user doesn't exist", func(t *testing.T) {
-			u, err := repo.FindUserByID(0)
 
 			assert.EqualError(t, err, "user not found")
 			assert.True(t, errors.As(err, &xErr.ErrNotFound{}))

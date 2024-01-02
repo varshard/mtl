@@ -192,6 +192,17 @@ func TestVoteItemRepository(t *testing.T) {
 	t.Run("Removable", func(t *testing.T) {
 		defer tearDownVoteItem()
 
+		item := &database.VoteItem{
+			CreatedBy:   TestUserID,
+			Name:        "test create",
+			Description: "description",
+		}
+		require.NoError(t, db.Create(&item).Error)
+		require.NoError(t, db.Table(database.TableUserVote).Create(&database.UserVote{
+			UserID:     1,
+			VoteItemID: item.ID,
+		}).Error)
+
 		tests := []struct {
 			name     string
 			id       uint
@@ -199,12 +210,12 @@ func TestVoteItemRepository(t *testing.T) {
 			err      any
 		}{
 			{
-				name:     "should returns 0 if the item has been voted",
-				id:       3,
+				name:     "should returns false if the item has been voted",
+				id:       item.ID,
 				expected: false,
 			},
 			{
-				name:     "should returns 0 if the item has 0 vote",
+				name:     "should returns true if the item can be removed",
 				id:       1,
 				expected: true,
 			},

@@ -128,3 +128,11 @@ func (v VoteItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
 }
+
+func (v VoteItemHandler) ResetItems(w http.ResponseWriter, r *http.Request) {
+	if err := v.VoteItemRepository.ResetItems(); err != nil {
+		rest.ServeJSON(http.StatusInternalServerError, w, &responses.ErrorResponse{Error: "fail to remove an item"})
+		return
+	}
+	rest.ServeJSON(http.StatusOK, w, responses.NewDataResponse(true))
+}

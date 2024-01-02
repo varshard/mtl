@@ -87,8 +87,5 @@ func (r ItemRepository) Remove(id uint) error {
 }
 
 func (r ItemRepository) ResetItems() error {
-	if err := r.DB.Exec("TRUNCATE user_vote").Error; err != nil {
-		return err
-	}
-	return r.DB.Exec("TRUNCATE vote_item").Error
+	return r.DB.Exec("DELETE FROM vote_item").Error
 }
