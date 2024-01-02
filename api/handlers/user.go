@@ -19,7 +19,7 @@ type AuthHandler struct {
 }
 
 type (
-	Login struct {
+	LoginRequest struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -29,7 +29,7 @@ type (
 )
 
 func (a AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	payload := Login{}
+	payload := LoginRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		rest.ServeJSON(http.StatusBadRequest, w, &responses.ErrorResponse{Error: err.Error()})

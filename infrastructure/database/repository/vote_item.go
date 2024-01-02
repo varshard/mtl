@@ -49,16 +49,15 @@ func (r ItemRepository) Create(item database.VoteItem) (*database.VoteItem, erro
 }
 
 func (r ItemRepository) Update(id uint, item vote.UpdateVoteItem) error {
-	exist := &database.VoteItem{ID: id}
-
-	err := r.DB.Table(exist.TableName()).Where(exist).Take(&exist).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return xErr.NewErrNotFound(errors.New(ErrVoteItemNotFound))
-	} else if err != nil {
+	var count int64 = 0
+	if err := r.DB.Table(database.TableVoteItem).Where("id = ?", id).Count(&count).Error; err != nil {
 		return xErr.NewErrUnexpected(err)
 	}
+	if count == 0 {
+		return xErr.NewErrNotFound(errors.New(ErrVoteItemNotFound))
+	}
 
-	if err := r.DB.Table(database.TableVoteItem).Where(exist).Updates(item).Error; err != nil {
+	if err := r.DB.Table(database.TableVoteItem).Where("id = ?", id).Updates(item).Error; err != nil {
 		return err
 	}
 
