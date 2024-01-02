@@ -24,13 +24,13 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic("fail to connect to the test database")
 	}
+	defer tests.Truncate(db)
 
 	if err := tests.SeedDB(db); err != nil {
 		panic(err)
 	}
 
 	m.Run()
-	defer tests.Truncate(db)
 }
 
 func TestUserRepository(t *testing.T) {
