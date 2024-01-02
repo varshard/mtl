@@ -63,7 +63,7 @@ Logging in using the credentials above in exchange for a JWK token for subsequen
 ## vote_item
 
 Allow to create /update /delete vote items. 
-Endpoints require the token from post /login as bearer authentication header.
+Endpoints require the token from post /login as bearer Authorization header.
 
 ### GET /vote_items
 
@@ -115,7 +115,7 @@ Create a vote item.
 }
 ```
 
-### PATCH /vote_items/:id
+### PUT /vote_items/:id
 
 Update a vote item by the given id.
 

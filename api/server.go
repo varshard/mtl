@@ -58,7 +58,7 @@ func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	voteRouter.Get("/", voteItemHandler.GetVoteItems)
 	voteRouter.Post("/", voteItemHandler.CreateItem)
 	voteRouter.Post("/reset", voteItemHandler.ResetItems)
-	voteRouter.Patch("/{id}", voteItemHandler.Update)
+	voteRouter.Put("/{id}", voteItemHandler.Update)
 	voteRouter.Delete("/{id}", voteItemHandler.Delete)
 	voteRouter.Post("/{id}/vote", voteHandler.Vote)
 	voteRouter.Post("/{id}/reset", voteHandler.ClearVotes)
