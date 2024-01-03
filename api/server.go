@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -11,9 +12,14 @@ import (
 	"github.com/varshard/mtl/infrastructure/database/repository"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 type MTLServer struct {
+	Server *http.Server
 }
 
 func (s MTLServer) Start(conf *config.Config) {
@@ -22,9 +28,14 @@ func (s MTLServer) Start(conf *config.Config) {
 		panic(fmt.Sprintf("fail to connect to the database: %s", err.Error()))
 	}
 	r := s.InitRoutes(db, conf)
-	if err := http.ListenAndServe(conf.Port, r); err != nil {
-		panic(fmt.Sprintf("fail to start server: %s", err.Error()))
+
+	s.Server = &http.Server{Addr: conf.Port, Handler: r}
+
+	if err := s.Server.ListenAndServe(); err != nil {
+		fmt.Printf("fail to start server: %s", err.Error())
 	}
+
+	go s.GracefulExit(db)
 }
 
 func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
@@ -65,4 +76,23 @@ func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 
 	r.Mount("/vote_items", voteRouter)
 	return r
+}
+
+func (s MTLServer) GracefulExit(db *(gorm.DB)) {
+	waiter := make(chan os.Signal, 1)
+	signal.Notify(waiter, syscall.SIGTERM, syscall.SIGINT)
+
+	<-waiter
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	defer func() {
+		fmt.Println("shutdown db")
+		dbInstance, _ := db.DB()
+		dbInstance.Close()
+	}()
+	if err := s.Server.Shutdown(ctx); err != nil {
+		fmt.Printf("fail to shut down the server with error %s\n", err.Error())
+	}
+	fmt.Println("shutdown server")
 }
