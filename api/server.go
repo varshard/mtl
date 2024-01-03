@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/varshard/mtl/api/handlers"
 	"github.com/varshard/mtl/api/middlewares"
 	"github.com/varshard/mtl/infrastructure/config"
-	"github.com/varshard/mtl/infrastructure/database"
 	"github.com/varshard/mtl/infrastructure/database/repository"
 	"gorm.io/gorm"
 	"net/http"
@@ -19,26 +19,30 @@ import (
 )
 
 type MTLServer struct {
-	Server *http.Server
+	Server           *http.Server
+	DB               *gorm.DB
+	shutdownFinished chan struct{}
 }
 
-func (s MTLServer) Start(conf *config.Config) {
-	db, err := database.InitDB(&conf.DBConfig)
-	if err != nil {
-		panic(fmt.Sprintf("fail to connect to the database: %s", err.Error()))
+func (s *MTLServer) Start(conf *config.Config) {
+	if s.shutdownFinished == nil {
+		s.shutdownFinished = make(chan struct{})
 	}
-	r := s.InitRoutes(db, conf)
+	r := s.InitRoutes(s.DB, conf)
 
 	s.Server = &http.Server{Addr: conf.Port, Handler: r}
 
-	if err := s.Server.ListenAndServe(); err != nil {
-		fmt.Printf("fail to start server: %s", err.Error())
+	err := s.Server.ListenAndServe()
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Println("server has been shutdown")
+	} else if err != nil {
+		fmt.Printf("fail to start the server %s\n", err.Error())
 	}
-
-	go s.GracefulExit(db)
+	<-s.shutdownFinished
+	fmt.Println("server finished shutting down")
 }
 
-func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
+func (s *MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	userRepo := repository.UserRepository{DB: db}
 	voteItemRepository := repository.ItemRepository{DB: db}
 	voteRepository := repository.VoteRepository{DB: db}
@@ -78,21 +82,20 @@ func (s MTLServer) InitRoutes(db *gorm.DB, conf *config.Config) *chi.Mux {
 	return r
 }
 
-func (s MTLServer) GracefulExit(db *(gorm.DB)) {
+func (s *MTLServer) GracefulExit() {
 	waiter := make(chan os.Signal, 1)
-	signal.Notify(waiter, syscall.SIGTERM, syscall.SIGINT)
-
+	signal.Notify(waiter, syscall.SIGTERM, os.Interrupt)
 	<-waiter
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	defer func() {
-		fmt.Println("shutdown db")
-		dbInstance, _ := db.DB()
-		dbInstance.Close()
-	}()
+	fmt.Println("closing db connection")
+	dbInstance, _ := s.DB.DB()
+	dbInstance.Close()
+	fmt.Println("close db connection")
+
 	if err := s.Server.Shutdown(ctx); err != nil {
 		fmt.Printf("fail to shut down the server with error %s\n", err.Error())
 	}
-	fmt.Println("shutdown server")
+	close(s.shutdownFinished)
 }
